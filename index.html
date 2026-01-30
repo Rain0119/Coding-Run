@@ -12,57 +12,80 @@
         }
 
         body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             font-family: 'Arial', sans-serif;
+            overflow: hidden;
         }
 
         .container {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            gap: 20px;
+            align-items: stretch;
+            justify-content: stretch;
         }
 
         h1 {
-            color: white;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-            margin-top: 20px;
+            display: none;
         }
 
         canvas {
             display: block;
-            background: linear-gradient(to bottom, #87CEEB, #90EE90);
-            border: 3px solid white;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            border: none;
+            box-shadow: none;
             cursor: pointer;
+            background: linear-gradient(to bottom, #87CEEB, #90EE90);
         }
 
         .info {
-            display: flex;
-            gap: 40px;
-            color: white;
-            font-size: 18px;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 15px 30px;
-            border-radius: 10px;
+            display: none;
         }
 
         .score-display {
             font-weight: bold;
+            position: fixed;
+            color: white;
+            font-size: 16px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 15px;
+            border-radius: 5px;
+            z-index: 100;
         }
 
-        .instructions {
-            color: white;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 20px;
-            border-radius: 10px;
-            max-width: 600px;
-            line-height: 1.6;
-            text-align: center;
+        #score {
+            top: 10px;
+            left: 10px;
+            position: fixed;
+        }
+
+        #level {
+            top: 50px;
+            left: 10px;
+            position: fixed;
+        }
+
+        #shield {
+            top: 90px;
+            left: 10px;
+            position: fixed;
+        }
+
+        #highScore {
+            top: 10px;
+            right: 10px;
+            position: fixed;
         }
 
         .game-over {
@@ -107,11 +130,7 @@
         }
 
         .controls {
-            color: white;
-            font-size: 14px;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 10px 20px;
-            border-radius: 5px;
+            display: none;
         }
     </style>
 </head>
@@ -129,10 +148,11 @@
         <div class="info">
             <div class="score-display">分數: <span id="score">0</span></div>
             <div class="score-display">難度: <span id="level">1</span></div>
+            <div class="score-display">🛡️ 護盾: <span id="shield">0</span></div>
             <div class="score-display">最高分: <span id="highScore">0</span></div>
         </div>
 
-        <canvas id="gameCanvas" width="400" height="600"></canvas>
+        <canvas id="gameCanvas" width="600" height="300"></canvas>
 
         <div class="game-over" id="gameOverScreen">
             <h2>遊戲結束！</h2>
@@ -162,7 +182,12 @@
             speed: 5,
             spawnRate: 0.02,
             playerTrack: 1, // 0: 左, 1: 中, 2: 右
-            movementFrame: 0 // 追踪移動後的幀數，延遲碰撞檢測
+            movementFrame: 0, // 追踪移動後的幀數，延遲碰撞檢測
+            shield: 0, // 護盾計數
+            coins: 0, // 金幣計數
+            scoreMultiplier: 1, // 分數倍率（星星道具）
+            multiplierTimer: 0, // 倍率時間計時器
+            slowDownTimer: 0 // 減速器時間計時器
         };
 
         // 玩家物件
@@ -181,6 +206,9 @@
 
         // 障礙物陣列
         let obstacles = [];
+
+        // 道具陣列
+        let powerUps = [];
 
         // 鍵盤狀態追踪（用於邊緣檢測）
         let prevKeys = {};
@@ -272,6 +300,78 @@
             }
         }
 
+        // 生成道具
+        function spawnPowerUp() {
+            if (Math.random() < 0.005) { // 低概率生成道具
+                const track = Math.floor(Math.random() * 3);
+                const types = ['coin', 'shield', 'slowDown', 'speedUp', 'star']; 
+                // coin: 金幣(+50分), shield: 護盾, slowDown: 減速器, speedUp: 加速器, star: 星星(2倍分數)
+                const type = types[Math.floor(Math.random() * types.length)];
+                
+                powerUps.push({
+                    track: track,
+                    x: track * TRACK_WIDTH + TRACK_WIDTH / 2 - 15,
+                    y: -30,
+                    width: 30,
+                    height: 30,
+                    speed: gameState.speed,
+                    type: type
+                });
+            }
+        }
+
+        // 更新道具
+        function updatePowerUps() {
+            for (let i = powerUps.length - 1; i >= 0; i--) {
+                powerUps[i].y += powerUps[i].speed;
+
+                // 移除超出螢幕的道具
+                if (powerUps[i].y > canvas.height) {
+                    powerUps.splice(i, 1);
+                }
+            }
+        }
+
+        // 道具碰撞檢測
+        function checkPowerUpCollision() {
+            for (let i = powerUps.length - 1; i >= 0; i--) {
+                const powerUp = powerUps[i];
+                if (
+                    player.x < powerUp.x + powerUp.width &&
+                    player.x + player.width > powerUp.x &&
+                    player.y < powerUp.y + powerUp.height &&
+                    player.y + player.height > powerUp.y
+                ) {
+                    // 根據道具類型應用效果
+                    if (powerUp.type === 'coin') {
+                        gameState.score += Math.round(50 * gameState.scoreMultiplier); // 金幣增加50分（乘以倍率）
+                        gameState.coins++;
+                    } else if (powerUp.type === 'shield') {
+                        gameState.shield += 1; // 護盾+1
+                    } else if (powerUp.type === 'slowDown') {
+                        gameState.speed = Math.max(2, gameState.speed - 1); // 減速，最慢保持2
+                        gameState.slowDownTimer = 300; // 減速持續300幀（約5秒）
+                        updateObstacleSpeed();
+                    } else if (powerUp.type === 'speedUp') {
+                        gameState.speed = Math.min(12, gameState.speed + 2); // 加速，最快12
+                        updateObstacleSpeed();
+                    } else if (powerUp.type === 'star') {
+                        gameState.scoreMultiplier = 2; // 分數倍率變為2倍
+                        gameState.multiplierTimer = 300; // 倍率持續300幀（約5秒）
+                    }
+                    powerUps.splice(i, 1);
+                    updateLevel();
+                }
+            }
+        }
+
+        // 更新障礙物速度
+        function updateObstacleSpeed() {
+            for (let obstacle of obstacles) {
+                obstacle.speed = gameState.speed;
+            }
+        }
+
         // 碰撞檢測 - 使用收縮邊界以確保精確碰撞
         function checkCollision() {
             const collisionMargin = 2; // 碰撞邊界縮小值
@@ -296,6 +396,13 @@
                     playerTop < obstacleBottom &&
                     playerBottom > obstacleTop
                 ) {
+                    // 如果有護盾，消耗護盾而不是死亡
+                    if (gameState.shield > 0) {
+                        gameState.shield--;
+                        document.getElementById('shield').textContent = gameState.shield;
+                        obstacles.splice(obstacles.indexOf(obstacle), 1);
+                        return false;
+                    }
                     return true;
                 }
             }
@@ -312,6 +419,7 @@
             }
             document.getElementById('level').textContent = gameState.level;
             document.getElementById('score').textContent = gameState.score;
+            document.getElementById('shield').textContent = gameState.shield;
         }
 
         // 繪製玩家
@@ -319,6 +427,15 @@
             // 身體
             ctx.fillStyle = '#FF6B6B';
             ctx.fillRect(player.x + 5, player.y + 5, PLAYER_SIZE - 10, PLAYER_SIZE - 10);
+            
+            // 護盾效果
+            if (gameState.shield > 0) {
+                ctx.strokeStyle = 'rgba(0, 255, 255, 0.8)';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(player.x + PLAYER_SIZE / 2, player.y + PLAYER_SIZE / 2, PLAYER_SIZE / 2 + 5, 0, Math.PI * 2);
+                ctx.stroke();
+            }
             
             // 眼睛
             ctx.fillStyle = '#FFF';
@@ -339,6 +456,90 @@
                 ctx.strokeStyle = '#CC0000';
                 ctx.lineWidth = 2;
                 ctx.strokeRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+            }
+        }
+
+        // 繪製道具
+        function drawPowerUps() {
+            for (let powerUp of powerUps) {
+                if (powerUp.type === 'coin') {
+                    // 金幣 - 黃色圓形
+                    ctx.fillStyle = '#FFD700';
+                    ctx.beginPath();
+                    ctx.arc(powerUp.x + 15, powerUp.y + 15, 12, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#FFA500';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    // 金幣中間的星號
+                    ctx.fillStyle = '#FFA500';
+                    ctx.font = 'bold 16px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('⭐', powerUp.x + 15, powerUp.y + 15);
+                } else if (powerUp.type === 'shield') {
+                    // 護盾 - 青色盾牌
+                    ctx.fillStyle = 'rgba(0, 255, 255, 0.7)';
+                    ctx.beginPath();
+                    ctx.moveTo(powerUp.x + 15, powerUp.y + 5);
+                    ctx.lineTo(powerUp.x + 25, powerUp.y + 12);
+                    ctx.lineTo(powerUp.x + 25, powerUp.y + 25);
+                    ctx.quadraticCurveTo(powerUp.x + 15, powerUp.y + 28, powerUp.x + 5, powerUp.y + 25);
+                    ctx.lineTo(powerUp.x + 5, powerUp.y + 12);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = '#00FFFF';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                } else if (powerUp.type === 'slowDown') {
+                    // 減速器 - 藍色烏龜
+                    ctx.fillStyle = '#4169E1';
+                    ctx.beginPath();
+                    ctx.arc(powerUp.x + 15, powerUp.y + 18, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                    // 龜殼紋理
+                    ctx.strokeStyle = '#1E90FF';
+                    ctx.lineWidth = 1;
+                    for (let j = 0; j < 2; j++) {
+                        ctx.beginPath();
+                        ctx.arc(powerUp.x + 15, powerUp.y + 18, 4 + j * 2, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                    // 龜頭
+                    ctx.fillStyle = '#4169E1';
+                    ctx.beginPath();
+                    ctx.arc(powerUp.x + 15, powerUp.y + 8, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (powerUp.type === 'speedUp') {
+                    // 加速器 - 紅色火焰（不好的物品）
+                    ctx.fillStyle = '#FF4500';
+                    ctx.beginPath();
+                    ctx.moveTo(powerUp.x + 15, powerUp.y + 5);
+                    ctx.lineTo(powerUp.x + 20, powerUp.y + 15);
+                    ctx.lineTo(powerUp.x + 17, powerUp.y + 15);
+                    ctx.lineTo(powerUp.x + 22, powerUp.y + 25);
+                    ctx.lineTo(powerUp.x + 15, powerUp.y + 18);
+                    ctx.lineTo(powerUp.x + 13, powerUp.y + 25);
+                    ctx.lineTo(powerUp.x + 12, powerUp.y + 15);
+                    ctx.lineTo(powerUp.x + 10, powerUp.y + 15);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = '#FF6347';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                } else if (powerUp.type === 'star') {
+                    // 星星 - 2倍分數倍率
+                    ctx.fillStyle = '#FFD700';
+                    ctx.font = 'bold 28px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('★', powerUp.x + 15, powerUp.y + 15);
+                    ctx.strokeStyle = '#FFA500';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(powerUp.x + 15, powerUp.y + 15, 12, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
             }
         }
 
@@ -387,6 +588,23 @@
             updatePlayer();
             spawnObstacle();
             updateObstacles();
+            spawnPowerUp();
+            updatePowerUps();
+            checkPowerUpCollision();
+
+            // 更新倍率和減速器計時器
+            if (gameState.multiplierTimer > 0) {
+                gameState.multiplierTimer--;
+            } else {
+                gameState.scoreMultiplier = 1; // 倍率時間到期，恢復正常
+            }
+
+            if (gameState.slowDownTimer > 0) {
+                gameState.slowDownTimer--;
+            } else if (gameState.slowDownTimer === 0 && gameState.speed < 5 + (gameState.level - 1) * 0.5) {
+                gameState.speed = 5 + (gameState.level - 1) * 0.5; // 恢復原始速度
+                updateObstacleSpeed();
+            }
 
             // 減少延遲幀計數
             if (gameState.movementFrame > 0) {
@@ -402,6 +620,7 @@
             // 繪製
             drawTracks();
             drawObstacles();
+            drawPowerUps();
             drawPlayer();
 
             requestAnimationFrame(gameLoop);
