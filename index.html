@@ -54,38 +54,80 @@
 
         .score-display {
             font-weight: bold;
-            position: fixed;
             color: white;
             font-size: 16px;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
             background: rgba(0, 0, 0, 0.5);
             padding: 8px 15px;
             border-radius: 5px;
+        }
+
+        .info {
+            position: fixed;
+            bottom: 55px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: row;
+            gap: 25px;
             z-index: 100;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 12px 25px;
+            border-radius: 10px;
+            justify-content: center;
+            align-items: center;
         }
 
         #score {
-            top: 10px;
-            left: 10px;
-            position: fixed;
+            display: block;
         }
 
         #level {
-            top: 50px;
-            left: 10px;
-            position: fixed;
+            display: block;
         }
 
         #shield {
-            top: 90px;
-            left: 10px;
-            position: fixed;
+            display: block;
         }
 
         #highScore {
-            top: 10px;
-            right: 10px;
+            display: block;
+        }
+
+        /* 遊戲信息面板 */
+        .game-info-panel {
             position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: row;
+            gap: 30px;
+            color: white;
+            font-size: 14px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.5);
+            padding: 12px 25px;
+            border-radius: 10px;
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .multiplier-display {
+            color: #FFD700;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .slowdown-display {
+            color: #4169E1;
+            font-weight: bold;
+        }
+
+        .speedup-display {
+            color: #FF4500;
+            font-weight: bold;
         }
 
         .game-over {
@@ -132,9 +174,210 @@
         .controls {
             display: none;
         }
+
+        /* 標題畫面 */
+        .title-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 500;
+            gap: 40px;
+        }
+
+        .title-screen h1 {
+            display: block;
+            font-size: 60px;
+            color: white;
+            text-shadow: 3px 3px 8px rgba(0, 0, 0, 0.8);
+            margin: 0;
+            text-align: center;
+        }
+
+        .title-screen p {
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.9);
+            text-align: center;
+            margin: 0;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 15px 40px;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        }
+
+        .btn-start:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn-settings {
+            background: linear-gradient(135deg, #FF9800 0%, #f57c00 100%);
+        }
+
+        .btn-settings:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(255, 152, 0, 0.4);
+        }
+
+        .instructions-box {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 25px 35px;
+            border-radius: 15px;
+            color: white;
+            max-width: 500px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(5px);
+        }
+
+        .instructions-box h3 {
+            font-size: 20px;
+            margin-bottom: 15px;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .instructions-box .instruction-item {
+            font-size: 16px;
+            margin: 10px 0;
+            text-align: left;
+            line-height: 1.6;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .instructions-box .control-key {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        /* 設定畫面 */
+        .settings-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 600;
+            gap: 30px;
+        }
+
+        .settings-screen.active {
+            display: flex;
+        }
+
+        .settings-container {
+            background: rgba(102, 126, 234, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            color: white;
+            text-align: center;
+            max-width: 400px;
+        }
+
+        .settings-container h2 {
+            font-size: 36px;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .setting-item {
+            margin: 20px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 18px;
+        }
+
+        .setting-item label {
+            font-weight: bold;
+        }
+
+        .setting-item input[type="range"] {
+            width: 150px;
+            height: 6px;
+            cursor: pointer;
+        }
+
+        .btn-close {
+            background: linear-gradient(135deg, #f44336 0%, #da190b 100%);
+            padding: 12px 30px;
+            font-size: 16px;
+        }
+
+        .btn-close:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(244, 67, 54, 0.4);
+        }
     </style>
 </head>
 <body>
+    <!-- 標題畫面 -->
+    <div class="title-screen" id="titleScreen">
+        <h1>Coding Run</h1>
+        <p>躲避障礙物，蒐集道具，創造新的高分紀錄！</p>
+        <div class="instructions-box">
+            <h3>🎮 遊玩方法</h3>
+            <div class="instruction-item">🕹️ <strong>移動：</strong> 按 <span class="control-key">A/D</span> 或 <span class="control-key">←/→</span> 在三條軌道間切換</div>
+            <div class="instruction-item">🏃 <strong>目標：</strong> 躲避障礙物，盡可能存活更久</div>
+            <div class="instruction-item">⭐ <strong>道具：</strong>
+                <div style="margin-left: 30px; font-size: 14px;">
+                    🪙 金幣：+50 分 | 🛡️ 護盾：保護一次 | 🐢 減速：降低速度<br/>
+                    🔥 加速：增加難度 | ⭐ 星星：2倍分數 5秒
+                </div>
+            </div>
+            <div class="instruction-item">📈 <strong>難度：</strong> 分數越高難度越高</div>
+        </div>
+        <div class="button-group">
+            <button class="btn btn-start" onclick="startGame()">開始遊戲</button>
+            <button class="btn btn-settings" onclick="toggleSettings()">⚙️ 設定</button>
+        </div>
+    </div>
+
+    <!-- 設定畫面 -->
+    <div class="settings-screen" id="settingsScreen">
+        <div class="settings-container">
+            <h2>⚙️ 遊戲設定</h2>
+            <div class="setting-item">
+                <label>難度倍數：</label>
+                <input type="range" id="difficultySlider" min="0.5" max="2" step="0.1" value="1" oninput="updateDifficulty(this.value)">
+                <span id="difficultyValue">1.0x</span>
+            </div>
+            <button class="btn btn-close" onclick="toggleSettings()">返回</button>
+        </div>
+    </div>
+
     <div class="container">
         <h1>🏃 三軌無限奔跑遊戲 🏃</h1>
         
@@ -152,6 +395,13 @@
             <div class="score-display">最高分: <span id="highScore">0</span></div>
         </div>
 
+        <!-- 遊戲信息面板 -->
+        <div class="game-info-panel" id="gameInfoPanel">
+            <div id="multiplierInfo"></div>
+            <div id="slowdownInfo"></div>
+            <div id="speedupInfo"></div>
+        </div>
+
         <canvas id="gameCanvas" width="600" height="300"></canvas>
 
         <div class="game-over" id="gameOverScreen">
@@ -163,6 +413,27 @@
     </div>
 
     <script>
+        // ======================== 標題和設定功能 ========================
+        let gameStarted = false;
+        let difficultyMultiplier = 1;
+
+        function startGame() {
+            gameStarted = true;
+            document.getElementById('titleScreen').style.display = 'none';
+            gameLoop();
+        }
+
+        function toggleSettings() {
+            const settingsScreen = document.getElementById('settingsScreen');
+            settingsScreen.classList.toggle('active');
+        }
+
+        function updateDifficulty(value) {
+            difficultyMultiplier = parseFloat(value);
+            document.getElementById('difficultyValue').textContent = value + 'x';
+        }
+
+        // ======================== 遊戲主體 ========================
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
@@ -176,18 +447,22 @@
         // 遊戲狀態
         let gameState = {
             score: 0,
+            displayScore: 0, // 顯示分數（用於平滑滾動效果）
             highScore: localStorage.getItem('highScore') || 0,
             gameOver: false,
             level: 1,
-            speed: 5,
-            spawnRate: 0.02,
+            speed: 3,
+            baseSpeed: 3, // 基礎速度（降低至3）
+            spawnRate: 0.01,
+            baseSpawnRate: 0.01, // 基礎生成率（降低至0.01）
             playerTrack: 1, // 0: 左, 1: 中, 2: 右
             movementFrame: 0, // 追踪移動後的幀數，延遲碰撞檢測
             shield: 0, // 護盾計數
             coins: 0, // 金幣計數
             scoreMultiplier: 1, // 分數倍率（星星道具）
             multiplierTimer: 0, // 倍率時間計時器
-            slowDownTimer: 0 // 減速器時間計時器
+            slowDownTimer: 0, // 減速器時間計時器
+            distanceAccumulator: 0 // 距離累積器，根據速度計算分數
         };
 
         // 玩家物件
@@ -258,7 +533,7 @@
 
         // 生成障礙物
         function spawnObstacle() {
-            if (Math.random() < gameState.spawnRate) {
+            if (Math.random() < gameState.spawnRate * difficultyMultiplier) {
                 // 檢查每條軌道上是否已經有障礙物
                 const tracksOccupied = [false, false, false];
                 for (let obstacle of obstacles) {
@@ -294,7 +569,7 @@
                 // 移除超出螢幕的障礙物
                 if (obstacles[i].y > canvas.height) {
                     obstacles.splice(i, 1);
-                    gameState.score += 10;
+                    // 不再給予躲避障礙物的分數，改用時間計算
                     updateLevel();
                 }
             }
@@ -409,17 +684,38 @@
             return false;
         }
 
-        // 更新難度
+        // 更新難度（平滑連續上升）
         function updateLevel() {
-            const newLevel = Math.floor(gameState.score / 100) + 1;
-            if (newLevel !== gameState.level) {
-                gameState.level = newLevel;
-                gameState.speed = 5 + (gameState.level - 1) * 0.5;
-                gameState.spawnRate = Math.min(0.02 + (gameState.level - 1) * 0.005, 0.08);
-            }
+            // 根據分數平滑計算難度
+            // 每 200 分增加 1 級
+            const smoothLevel = 1 + (gameState.score / 200);
+            gameState.level = Math.floor(smoothLevel);
+            
+            // 速度平滑增加：基礎速度 + 根據分數平滑增加
+            gameState.speed = gameState.baseSpeed + (smoothLevel - 1) * 0.3;
+            
+            // 生成率平滑增加：基礎生成率 + 根據分數平滑增加
+            gameState.spawnRate = Math.min(gameState.baseSpawnRate + (smoothLevel - 1) * 0.003, 0.08);
+            
             document.getElementById('level').textContent = gameState.level;
-            document.getElementById('score').textContent = gameState.score;
             document.getElementById('shield').textContent = gameState.shield;
+        }
+
+        // 更新顯示分數（平滑滾動效果）
+        function updateDisplayScore() {
+            const diff = gameState.score - gameState.displayScore;
+            
+            // 如果有差異，就逐漸接近目標分數
+            if (diff > 0) {
+                // 分數差異越大，增長越快
+                const speed = Math.max(1, Math.floor(diff / 10));
+                gameState.displayScore += speed;
+            } else if (diff < 0) {
+                gameState.displayScore = gameState.score;
+            }
+            
+            // 更新顯示
+            document.getElementById('score').textContent = Math.floor(gameState.displayScore);
         }
 
         // 繪製玩家
@@ -562,6 +858,8 @@
         // 遊戲結束
         function endGame() {
             gameState.gameOver = true;
+            gameState.score = Math.floor(gameState.score);
+            gameState.highScore = Math.floor(gameState.highScore);
             if (gameState.score > gameState.highScore) {
                 gameState.highScore = gameState.score;
                 localStorage.setItem('highScore', gameState.highScore);
@@ -573,7 +871,7 @@
 
         // 主遊戲循環
         function gameLoop() {
-            if (gameState.gameOver) {
+            if (!gameStarted || gameState.gameOver) {
                 return;
             }
 
@@ -606,6 +904,24 @@
                 updateObstacleSpeed();
             }
 
+            // 根據遊戲移動距離計算分數（基於速度）
+            // 每次循環，根據當前速度累積距離
+            // 每 10 個距離單位 = 1 分（乘以倍率和難度倍數）
+            gameState.distanceAccumulator += gameState.speed * gameState.scoreMultiplier * difficultyMultiplier;
+            
+            // 每 10 個距離單位增加 1 分
+            if (gameState.distanceAccumulator >= 10) {
+                const scoreToAdd = Math.floor(gameState.distanceAccumulator / 10);
+                gameState.score += scoreToAdd;
+                gameState.distanceAccumulator -= scoreToAdd * 10;
+            }
+
+            // 更新難度（每幀檢查，確保平滑上升）
+            updateLevel();
+
+            // 更新顯示分數（平滑滾動效果）
+            updateDisplayScore();
+
             // 減少延遲幀計數
             if (gameState.movementFrame > 0) {
                 gameState.movementFrame--;
@@ -617,6 +933,9 @@
                 return;
             }
 
+            // 更新遊戲信息面板
+            updateGameInfoPanel();
+
             // 繪製
             drawTracks();
             drawObstacles();
@@ -626,8 +945,38 @@
             requestAnimationFrame(gameLoop);
         }
 
-        // 開始遊戲
-        gameLoop();
+        // 更新遊戲信息面板
+        function updateGameInfoPanel() {
+            const multiplierInfo = document.getElementById('multiplierInfo');
+            const slowdownInfo = document.getElementById('slowdownInfo');
+            const speedupInfo = document.getElementById('speedupInfo');
+
+            // 更新倍率信息
+            if (gameState.scoreMultiplier > 1) {
+                const timeLeft = Math.ceil(gameState.multiplierTimer / 60); // 轉換為秒
+                multiplierInfo.innerHTML = `<div class="multiplier-display">⭐ 倍率: ${gameState.scoreMultiplier}x (${timeLeft}s)</div>`;
+            } else {
+                multiplierInfo.innerHTML = '';
+            }
+
+            // 更新減速器信息
+            if (gameState.slowDownTimer > 0) {
+                const timeLeft = Math.ceil(gameState.slowDownTimer / 60);
+                slowdownInfo.innerHTML = `<div class="slowdown-display">🐢 減速中 (${timeLeft}s)</div>`;
+            } else {
+                slowdownInfo.innerHTML = '';
+            }
+
+            // 更新加速器信息
+            if (gameState.speed > 5 + (gameState.level - 1) * 0.5) {
+                speedupInfo.innerHTML = `<div class="speedup-display">🔥 加速中 (危險！)</div>`;
+            } else {
+                speedupInfo.innerHTML = '';
+            }
+        }
+
+        // 初始化遊戲（顯示標題畫面）
+        // 不自動開始，等待用戶點擊開始
     </script>
 </body>
 </html>
