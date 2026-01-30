@@ -1,7 +1,7 @@
 # Coding Run
 ## 背景
 
-你現在是一位開發者，必須要 Debug，並在必要時使用 Surfshark VPN 加速。
+你現在是一位開發者，必須要 Debug，並在必要時使用 Surfshark VPN 加速，或用 Microsoft Defender 保護自己。
 
 ## 控制方式
 
