@@ -161,7 +161,8 @@
             level: 1,
             speed: 5,
             spawnRate: 0.02,
-            playerTrack: 1 // 0: 左, 1: 中, 2: 右
+            playerTrack: 1, // 0: 左, 1: 中, 2: 右
+            movementFrame: 0 // 追踪移動後的幀數，延遲碰撞檢測
         };
 
         // 玩家物件
@@ -181,29 +182,46 @@
         // 障礙物陣列
         let obstacles = [];
 
+        // 鍵盤狀態追踪（用於邊緣檢測）
+        let prevKeys = {};
+
         // 初始化高分顯示
         document.getElementById('highScore').textContent = gameState.highScore;
 
         // 事件監聽
         document.addEventListener('keydown', (e) => {
             keys[e.key.toLowerCase()] = true;
-            
-            if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') {
-                if (player.track > 0) {
-                    player.track--;
-                }
-                e.preventDefault();
-            } else if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') {
-                if (player.track < 2) {
-                    player.track++;
-                }
-                e.preventDefault();
-            }
         });
 
         document.addEventListener('keyup', (e) => {
             keys[e.key.toLowerCase()] = false;
         });
+
+        // 處理玩家移動輸入 - 只在按鍵剛按下時移動
+        function handlePlayerInput() {
+            const isLeftPressed = keys['a'] || keys['arrowleft'];
+            const isRightPressed = keys['d'] || keys['arrowright'];
+            
+            const wasLeftPressed = prevKeys['a'] || prevKeys['arrowleft'];
+            const wasRightPressed = prevKeys['d'] || prevKeys['arrowright'];
+
+            // 只有在按鍵從未按下變為按下時才移動（邊緣檢測）
+            if (isLeftPressed && !wasLeftPressed) {
+                if (player.track > 0) {
+                    player.track--;
+                    gameState.movementFrame = 2; // 設置延遲幀，讓角色先移動2幀再檢查碰撞
+                }
+            }
+            if (isRightPressed && !wasRightPressed) {
+                if (player.track < 2) {
+                    player.track++;
+                    gameState.movementFrame = 2; // 設置延遲幀，讓角色先移動2幀再檢查碰撞
+                }
+            }
+
+            // 保存本幀的按鍵狀態供下一幀使用
+            prevKeys = { ...keys };
+        }
 
         // 更新玩家位置
         function updatePlayer() {
@@ -213,6 +231,21 @@
         // 生成障礙物
         function spawnObstacle() {
             if (Math.random() < gameState.spawnRate) {
+                // 檢查每條軌道上是否已經有障礙物
+                const tracksOccupied = [false, false, false];
+                for (let obstacle of obstacles) {
+                    // 如果障礙物在可碰撞區域（玩家所在位置附近）
+                    if (obstacle.y > canvas.height - 150) {
+                        tracksOccupied[obstacle.track] = true;
+                    }
+                }
+
+                // 如果所有軌道都被占據，則不生成新障礙物
+                if (tracksOccupied[0] && tracksOccupied[1] && tracksOccupied[2]) {
+                    return;
+                }
+
+                // 隨機選擇一條未被占據的軌道（或任意軌道，如果未完全占據）
                 const track = Math.floor(Math.random() * 3);
                 obstacles.push({
                     track: track,
@@ -239,14 +272,29 @@
             }
         }
 
-        // 碰撞檢測
+        // 碰撞檢測 - 使用收縮邊界以確保精確碰撞
         function checkCollision() {
+            const collisionMargin = 2; // 碰撞邊界縮小值
+            
             for (let obstacle of obstacles) {
+                // 玩家碰撞盒（稍微縮小）
+                const playerLeft = player.x + collisionMargin;
+                const playerRight = player.x + player.width - collisionMargin;
+                const playerTop = player.y + collisionMargin;
+                const playerBottom = player.y + player.height - collisionMargin;
+
+                // 障礙物碰撞盒（稍微縮小）
+                const obstacleLeft = obstacle.x + collisionMargin;
+                const obstacleRight = obstacle.x + obstacle.width - collisionMargin;
+                const obstacleTop = obstacle.y + collisionMargin;
+                const obstacleBottom = obstacle.y + obstacle.height - collisionMargin;
+
+                // 精確的 AABB 碰撞檢測
                 if (
-                    player.x < obstacle.x + obstacle.width &&
-                    player.x + player.width > obstacle.x &&
-                    player.y < obstacle.y + obstacle.height &&
-                    player.y + player.height > obstacle.y
+                    playerLeft < obstacleRight &&
+                    playerRight > obstacleLeft &&
+                    playerTop < obstacleBottom &&
+                    playerBottom > obstacleTop
                 ) {
                     return true;
                 }
@@ -332,13 +380,21 @@
             ctx.fillStyle = 'rgba(135, 206, 235, 0.7)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // 更新
+            // 處理玩家輸入（移動）
+            handlePlayerInput();
+
+            // 更新位置
             updatePlayer();
             spawnObstacle();
             updateObstacles();
 
-            // 檢查碰撞
-            if (checkCollision()) {
+            // 減少延遲幀計數
+            if (gameState.movementFrame > 0) {
+                gameState.movementFrame--;
+            }
+
+            // 只有在延遲幀結束後才檢查碰撞（確保角色已移動並渲染）
+            if (gameState.movementFrame === 0 && checkCollision()) {
                 endGame();
                 return;
             }
