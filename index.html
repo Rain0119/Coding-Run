@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>三軌無限奔跑遊戲</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Arial', sans-serif;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        h1 {
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            margin-top: 20px;
+        }
+
+        canvas {
+            display: block;
+            background: linear-gradient(to bottom, #87CEEB, #90EE90);
+            border: 3px solid white;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+        }
+
+        .info {
+            display: flex;
+            gap: 40px;
+            color: white;
+            font-size: 18px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px 30px;
+            border-radius: 10px;
+        }
+
+        .score-display {
+            font-weight: bold;
+        }
+
+        .instructions {
+            color: white;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 600px;
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        .game-over {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 40px;
+            border-radius: 10px;
+            color: white;
+            text-align: center;
+            z-index: 1000;
+            border: 3px solid gold;
+        }
+
+        .game-over h2 {
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+
+        .game-over p {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .game-over button {
+            margin-top: 20px;
+            padding: 10px 30px;
+            font-size: 18px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .game-over button:hover {
+            background: #764ba2;
+        }
+
+        .controls {
+            color: white;
+            font-size: 14px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 20px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏃 三軌無限奔跑遊戲 🏃</h1>
+        
+        <div class="instructions">
+            <p>🎮 躲避障礙物，盡可能獲得更高分數！</p>
+            <div class="controls">
+                <p>📱 操作方式：<strong>A/D 鍵</strong> 或 <strong>左/右 方向鍵</strong> 移動</p>
+            </div>
+        </div>
+
+        <div class="info">
+            <div class="score-display">分數: <span id="score">0</span></div>
+            <div class="score-display">難度: <span id="level">1</span></div>
+            <div class="score-display">最高分: <span id="highScore">0</span></div>
+        </div>
+
+        <canvas id="gameCanvas" width="400" height="600"></canvas>
+
+        <div class="game-over" id="gameOverScreen">
+            <h2>遊戲結束！</h2>
+            <p>最終分數: <span id="finalScore">0</span></p>
+            <p>最高分: <span id="maxScore">0</span></p>
+            <button onclick="location.reload()">重新開始</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // 遊戲配置
+        const TRACK_WIDTH = canvas.width / 3;
+        const GROUND_Y = canvas.height - 60;
+        const PLAYER_SIZE = 30;
+        const OBSTACLE_WIDTH = 35;
+        const OBSTACLE_HEIGHT = 40;
+
+        // 遊戲狀態
+        let gameState = {
+            score: 0,
+            highScore: localStorage.getItem('highScore') || 0,
+            gameOver: false,
+            level: 1,
+            speed: 5,
+            spawnRate: 0.02,
+            playerTrack: 1 // 0: 左, 1: 中, 2: 右
+        };
+
+        // 玩家物件
+        const player = {
+            track: 1,
+            x: TRACK_WIDTH * 1.5 - PLAYER_SIZE / 2,
+            y: GROUND_Y,
+            width: PLAYER_SIZE,
+            height: PLAYER_SIZE,
+            isMoving: false,
+            targetTrack: 1
+        };
+
+        // 鍵盤狀態
+        const keys = {};
+
+        // 障礙物陣列
+        let obstacles = [];
+
+        // 初始化高分顯示
+        document.getElementById('highScore').textContent = gameState.highScore;
+
+        // 事件監聽
+        document.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+            
+            if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') {
+                if (player.track > 0) {
+                    player.track--;
+                }
+                e.preventDefault();
+            } else if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') {
+                if (player.track < 2) {
+                    player.track++;
+                }
+                e.preventDefault();
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
+        });
+
+        // 更新玩家位置
+        function updatePlayer() {
+            player.x = player.track * TRACK_WIDTH + TRACK_WIDTH / 2 - PLAYER_SIZE / 2;
+        }
+
+        // 生成障礙物
+        function spawnObstacle() {
+            if (Math.random() < gameState.spawnRate) {
+                const track = Math.floor(Math.random() * 3);
+                obstacles.push({
+                    track: track,
+                    x: track * TRACK_WIDTH + TRACK_WIDTH / 2 - OBSTACLE_WIDTH / 2,
+                    y: -OBSTACLE_HEIGHT,
+                    width: OBSTACLE_WIDTH,
+                    height: OBSTACLE_HEIGHT,
+                    speed: gameState.speed
+                });
+            }
+        }
+
+        // 更新障礙物
+        function updateObstacles() {
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                obstacles[i].y += obstacles[i].speed;
+
+                // 移除超出螢幕的障礙物
+                if (obstacles[i].y > canvas.height) {
+                    obstacles.splice(i, 1);
+                    gameState.score += 10;
+                    updateLevel();
+                }
+            }
+        }
+
+        // 碰撞檢測
+        function checkCollision() {
+            for (let obstacle of obstacles) {
+                if (
+                    player.x < obstacle.x + obstacle.width &&
+                    player.x + player.width > obstacle.x &&
+                    player.y < obstacle.y + obstacle.height &&
+                    player.y + player.height > obstacle.y
+                ) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // 更新難度
+        function updateLevel() {
+            const newLevel = Math.floor(gameState.score / 100) + 1;
+            if (newLevel !== gameState.level) {
+                gameState.level = newLevel;
+                gameState.speed = 5 + (gameState.level - 1) * 0.5;
+                gameState.spawnRate = Math.min(0.02 + (gameState.level - 1) * 0.005, 0.08);
+            }
+            document.getElementById('level').textContent = gameState.level;
+            document.getElementById('score').textContent = gameState.score;
+        }
+
+        // 繪製玩家
+        function drawPlayer() {
+            // 身體
+            ctx.fillStyle = '#FF6B6B';
+            ctx.fillRect(player.x + 5, player.y + 5, PLAYER_SIZE - 10, PLAYER_SIZE - 10);
+            
+            // 眼睛
+            ctx.fillStyle = '#FFF';
+            ctx.beginPath();
+            ctx.arc(player.x + 12, player.y + 12, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(player.x + 23, player.y + 12, 3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // 繪製障礙物
+        function drawObstacles() {
+            ctx.fillStyle = '#FF0000';
+            for (let obstacle of obstacles) {
+                ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+                // 障礙物邊框
+                ctx.strokeStyle = '#CC0000';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+            }
+        }
+
+        // 繪製軌道
+        function drawTracks() {
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.lineWidth = 2;
+            for (let i = 1; i < 3; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * TRACK_WIDTH, 0);
+                ctx.lineTo(i * TRACK_WIDTH, canvas.height);
+                ctx.stroke();
+            }
+
+            // 繪製地面
+            ctx.fillStyle = '#90EE90';
+            ctx.fillRect(0, GROUND_Y + PLAYER_SIZE, canvas.width, canvas.height - GROUND_Y - PLAYER_SIZE);
+        }
+
+        // 遊戲結束
+        function endGame() {
+            gameState.gameOver = true;
+            if (gameState.score > gameState.highScore) {
+                gameState.highScore = gameState.score;
+                localStorage.setItem('highScore', gameState.highScore);
+            }
+            document.getElementById('gameOverScreen').style.display = 'block';
+            document.getElementById('finalScore').textContent = gameState.score;
+            document.getElementById('maxScore').textContent = gameState.highScore;
+        }
+
+        // 主遊戲循環
+        function gameLoop() {
+            if (gameState.gameOver) {
+                return;
+            }
+
+            // 清空畫布
+            ctx.fillStyle = 'rgba(135, 206, 235, 0.7)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 更新
+            updatePlayer();
+            spawnObstacle();
+            updateObstacles();
+
+            // 檢查碰撞
+            if (checkCollision()) {
+                endGame();
+                return;
+            }
+
+            // 繪製
+            drawTracks();
+            drawObstacles();
+            drawPlayer();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // 開始遊戲
+        gameLoop();
+    </script>
+</body>
+</html>
